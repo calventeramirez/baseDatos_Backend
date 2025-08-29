@@ -1,0 +1,6 @@
+pydantic
+pymongo
+fastapi
+PyJWT
+passlib
+python-multipart
