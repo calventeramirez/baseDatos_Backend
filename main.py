@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from routers import libros
-from routers import auth_usuario
+from routers import libros, auth_usuario, videos
 
 app = FastAPI()
 
@@ -23,6 +22,7 @@ app.add_middleware(
 
 #Routers
 app.include_router(libros.router)
+app.include_router(videos.router)
 app.include_router(auth_usuario.router)
 
 @app.get("/")
