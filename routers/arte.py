@@ -27,7 +27,7 @@ async def get_arte(id: str):
 async def create_arte(arte: Arte):
     if search_arte("titulo", arte.titulo) is not None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail="La película ya existe")
+                            detail="El cuadro o escultura ya existe")
 
     arte_dict = dict(arte)
     del arte_dict["id"] #Se borra para que autogenere en mongo
@@ -39,11 +39,13 @@ async def create_arte(arte: Arte):
 @router.put("/", response_model=Arte)
 async def update_arte(arte: Arte):
     arte_dict = dict(arte)
+    print(arte_dict)
     del arte_dict["id"]
-
-    updated_arte = db_client.arte.find_one_and_update({"titulo": arte.titulo},
+    print(arte_dict)
+    updated_arte = db_client.arte.find_one_and_update({"_id": ObjectId(arte.id)},
                                                          {"$set": arte_dict},
                                                          return_document=True)
+    print(updated_arte)
     if not updated_arte:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cuadro o Escultura no encontrado")
 

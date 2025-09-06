@@ -7,9 +7,9 @@ def artes_schema(arte) -> dict:
         "tecnicaPictorica": str(arte["tecnicaPictorica"]) if arte["tecnicaPictorica"] is not None else "",
         "tecnicaEscultorica": str(arte["tecnicaEscultorica"]) if arte["tecnicaEscultorica"] is not None else "",
         "certificado": bool(arte["certificado"]),
-        "altura": float(arte["altura"]) if arte["altura"] is not None else "",
-        "anchura": float(arte["anchura"]) if arte["anchura"] is not None else "",
-        "peso": float(arte["peso"]) if arte["peso"] is not None else "",
+        "altura": str(arte["altura"]) if arte["altura"] is not None else "",
+        "anchura": str(arte["anchura"]) if arte["anchura"] is not None else "",
+        "peso": str(arte["peso"]) if arte["peso"] is not None else "",
     }
 
 def artes_schema_list(artes) -> list:

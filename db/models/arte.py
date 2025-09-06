@@ -8,6 +8,6 @@ class Arte(BaseModel):
     tecnicaPictorica: str | None
     tecnicaEscultorica: str | None
     certificado: bool
-    altura: float | None
-    anchura: float | None
-    peso: float | None
+    altura: str | None
+    anchura: str | None
+    peso: str | None
