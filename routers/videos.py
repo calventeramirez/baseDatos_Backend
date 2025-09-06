@@ -4,7 +4,7 @@ from db.schema.videos import videos_schema, videos_schema_list
 from db.client import db_client
 from bson.objectid import ObjectId
 
-router = APIRouter(prefix="/videos", tags=["videos"], responses={status.HTTP_404_NOT_FOUND: {"Mensaje": "No encontrado el video"}})
+router = APIRouter(prefix="/videos", tags=["Videos"], responses={status.HTTP_404_NOT_FOUND: {"Mensaje": "No encontrado el video"}})
 
 @router.get("/", response_model=list[Videos])
 async def get_all_videos():

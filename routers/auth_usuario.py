@@ -15,7 +15,7 @@ ALGORITHM = "HS256"
 SECRET_KEY = os.getenv("SECRET_KEY", "3228f0d3b5d04c88d2818a85846c2f8c78437f1d2411ec163a9b9eaa04bb6871")
 
 router = APIRouter(
-    tags=["auth"],
+    tags=["Auth"],
     responses={status.HTTP_404_NOT_FOUND: {"description": "No encontrado"}}
 )
 

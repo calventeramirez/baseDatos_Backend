@@ -4,7 +4,7 @@ from db.client import db_client
 from db.schema.libros import libros_schema, libros_schema_list
 from bson.objectid import  ObjectId
 
-router = APIRouter(prefix="/libros", tags=["libros"], responses={status.HTTP_404_NOT_FOUND: {"Mensaje": "No encontrado el libro"}})
+router = APIRouter(prefix="/libros", tags=["Libros"], responses={status.HTTP_404_NOT_FOUND: {"Mensaje": "No encontrado el libro"}})
 
 @router.get("/", response_model=list[Libros])
 async def get_all_libros():
