@@ -25,7 +25,7 @@ async def get_revista(id: str):
 
 @router.post("/", response_model=Revista, status_code=status.HTTP_201_CREATED)
 async def create_revista(revista: Revista):
-    if search_revistas("titulo", revista.titulo) is not None:
+    if search_revistas_by_titulo_and_number(revista.titulo, revista.numRevista) is not None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="La revista ya existe")
 
@@ -62,3 +62,13 @@ def search_revistas(field:str, key):
     if revista:
         return revistas_schema(revista)
     return None
+
+def search_revistas_by_titulo_and_number(titulo:str, numero:int):
+    try:
+        revista = db_client.revistas.find_one({
+            "titulo": titulo,
+            "numRevista": numero
+        })
+        return revistas_schema(revista) if revista else None
+    except:
+        return None
