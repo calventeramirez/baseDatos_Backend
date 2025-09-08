@@ -6,6 +6,7 @@ class Musica(BaseModel):
     artista: str
     tipoArtista: str
     tipoMusica: str
+    tipoMusicaClasica: str | None
     idioma: str
     discografica: str
     anoGrab:int

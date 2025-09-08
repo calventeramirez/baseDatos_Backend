@@ -5,6 +5,7 @@ def musicas_schema(musica) -> dict:
         "artista": str(musica["artista"]),
         "tipoArtista": str(musica["tipoArtista"]),
         "tipoMusica": str(musica["tipoMusica"]),
+        "tipoMusicaClasica": str(musica["tipoMusicaClasica"]) if musica["tipoMusicaClasica"] is not None else "",
         "idioma": str(musica["idioma"]),
         "discografica": str(musica["discografica"]),
         "anoGrab": int(musica["anoGrab"]),
