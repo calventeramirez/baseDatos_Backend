@@ -1,3 +1,5 @@
+from os import access
+
 from fastapi import APIRouter, HTTPException, status
 import jwt
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -37,6 +39,80 @@ def search_user(username: str) -> Usuario | None:
         # Log del error si tienes logging configurado
         print(f"\n\nError buscando usuario: {e}")
         return None
+
+def check_si_primer_setup() -> bool:
+    """Verifica si es el primer setup y  no hay usuarios en la bbdd"""
+    try:
+        user_count = db_client.usuarios.count_documents({})
+        return user_count == 0
+    except Exception as e:
+        print(f"\n\nError buscando usuario: {e}")
+        return False
+
+@router.get("/estado")
+async def get_setup_status():
+    try:
+        necesita_setup = check_si_primer_setup()
+        return {
+            "necesita_setup": necesita_setup,
+            "message":"Primer setup requerido" if necesita_setup else "Setup completado"
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error checking setup status: {str(e)}"
+        )
+
+@router.post("/primerSetup")
+async def primerSetup(datos: Usuario):
+    try:
+        if not check_si_primer_setup():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="El setup inicial ya fue completado. No se permiten más registros."
+            )
+
+        hashed_password = crypt.hash(datos.password)
+
+        new_usuario =  {
+            "username": datos.username,
+            "password": hashed_password
+        }
+
+        result = db_client.usuarios.insert_one(new_usuario)
+
+        if not result.inserted_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error al crear el usuario"
+            )
+
+        expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+        access_token_data= {
+            "sub": datos.username,
+            "exp": expire,
+            "iat": datetime.now(timezone.utc)  # "issued at"
+        }
+
+        access_token = jwt.encode(access_token_data, SECRET_KEY, algorithm=ALGORITHM)
+        return {
+            "access_token": access_token,
+            "usuario": {
+                "id": str(datos.id),
+                "username": datos.username
+            },
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # en segundos
+            "message": "Setup inicial completado. Usuario administrador creado."
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error durante el setup inicial: {str(e)}"
+        )
 
 
 @router.post("/login")
