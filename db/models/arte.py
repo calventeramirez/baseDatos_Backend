@@ -11,3 +11,4 @@ class Arte(BaseModel):
     altura: str | None
     anchura: str | None
     peso: str | None
+    foto: str | None

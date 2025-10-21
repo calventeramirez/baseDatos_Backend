@@ -10,6 +10,7 @@ def artes_schema(arte) -> dict:
         "altura": str(arte["altura"]) if arte["altura"] is not None else "",
         "anchura": str(arte["anchura"]) if arte["anchura"] is not None else "",
         "peso": str(arte["peso"]) if arte["peso"] is not None else "",
+        "foto": str(arte["foto"]) if arte["foto"] is not None else "",
     }
 
 def artes_schema_list(artes) -> list:
