@@ -5,10 +5,10 @@ from routers import libros, auth_usuario, videos, cdrom, arte, revista, musica
 
 app = FastAPI()
 
-# Aquí defines los orígenes permitidos (frontend)
+# Aqui defines los origenes permitidos (frontend)
 origins = [
     "http://localhost:3000",  # tu frontend local
-    "http://127.0.0.1:3000",  # por si usas esta dirección
+    "http://127.0.0.1:3000",  # por si usas esta direccion
     "*",
 ]
 
