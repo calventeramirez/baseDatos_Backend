@@ -5,19 +5,20 @@ from routers import libros, auth_usuario, videos, cdrom, arte, revista, musica
 
 app = FastAPI()
 
-#Permitir origenes
+# Aquí defines los orígenes permitidos (frontend)
 origins = [
-    "http://localhost:3000", #front end en local con nextJS
-    "http://127.0.0.1:3000"
+    "http://localhost:3000",  # tu frontend local
+    "http://127.0.0.1:3000",  # por si usas esta dirección
+    "*",
 ]
 
-#Añadir CORS
+# Activar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, #Origenes permitidos
+    allow_origins=origins,          # dominios permitidos
     allow_credentials=True,
-    allow_methods=["*"], # Metodos permitidos (GET, POST, PUT, DELETE)
-    allow_headers=["*"], # Headers permitidos
+    allow_methods=["*"],            # permite todos los métodos (GET, POST, etc.)
+    allow_headers=["*"],            # permite todos los headers
 )
 
 #Routers
