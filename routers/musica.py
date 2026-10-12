@@ -1,14 +1,48 @@
-from fastapi import FastAPI, APIRouter, status, HTTPException
+from fastapi import FastAPI, APIRouter, status, HTTPException, Query
 from db.models.musica import Musica
 from db.schema.musica import musicas_schema, musicas_schema_list
 from db.client import db_client
 from bson.objectid import ObjectId
+from typing import Optional
+import math
+import re
 
 router = APIRouter(prefix="/musica", tags=["Musica"], responses={status.HTTP_404_NOT_FOUND: {"Mensaje": "No encontrado la musica"}})
 
-@router.get("/", response_model=list[Musica])
-async def get_all_musicas():
-    return musicas_schema_list(db_client.musicas.find())
+#@router.get("/", response_model=list[Musica])
+#async def get_all_musicas():
+#    return musicas_schema_list(db_client.musicas.find())
+
+SEARCH_FIELDS = ["titulo", "artista", "album"]
+
+@router.get("/")
+async def get_all_musicas(
+        page: int = Query(1, ge=1, description="Número de página"),
+        limit: int = Query(10, ge=1, le=100, description="Discos por página"),
+        search: Optional[str] = Query(None, description="Buscar por título, artista o álbum")
+):
+    skip = (page - 1) * limit
+
+    filter_query = {}
+    if search and search.strip():
+        regex = {"$regex": re.escape(search.strip()), "$options": "i"}
+        filter_query = {"$or": [{field: regex} for field in SEARCH_FIELDS]}
+
+    total = db_client.musicas.count_documents(filter_query)
+
+    musicas_cursor = db_client.musicas.find(filter_query).sort("_id", -1).skip(skip).limit(limit)
+    musicas = musicas_schema_list(musicas_cursor)
+
+    total_pages = math.ceil(total / limit) if total > 0 else 0
+
+    return {
+        "results": musicas,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages
+    }
+
 
 @router.get("/{id}", response_model=Musica)
 async def get_musica(id: str):

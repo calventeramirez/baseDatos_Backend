@@ -1,14 +1,50 @@
-from fastapi import FastAPI, APIRouter, status, HTTPException
+from fastapi import FastAPI, APIRouter, status, HTTPException, Query
 from db.models.revista import Revista
 from db.schema.revista import revistas_schema, revistas_schema_list
 from db.client import db_client
 from bson.objectid import ObjectId
+from typing import Optional
+import math
+import re
 
 router = APIRouter(prefix="/revista", tags=["Revistas"], responses={status.HTTP_404_NOT_FOUND: {"Mensaje": "No encontrado la revista"}})
 
-@router.get("/", response_model=list[Revista])
-async def get_all_revistas():
-    return revistas_schema_list(db_client.revistas.find())
+#@router.get("/", response_model=list[Revista])
+#async def get_all_revistas():
+#    return revistas_schema_list(db_client.revistas.find())
+
+# Campos del documento donde actúa el parámetro `search`.
+SEARCH_FIELDS = ["titulo", "tematica", "editorial"]
+
+
+@router.get("/")
+async def get_all_revistas(
+        page: int = Query(1, ge=1, description="Número de página"),
+        limit: int = Query(10, ge=1, le=100, description="Revistas por página"),
+        search: Optional[str] = Query(None, description="Buscar por título, temática o editorial")
+):
+    skip = (page - 1) * limit
+
+    filter_query = {}
+    if search and search.strip():
+        regex = {"$regex": re.escape(search.strip()), "$options": "i"}
+        filter_query = {"$or": [{field: regex} for field in SEARCH_FIELDS]}
+
+    total = db_client.revistas.count_documents(filter_query)
+
+    revistas_cursor = db_client.revistas.find(filter_query).sort("_id", -1).skip(skip).limit(limit)
+    revistas = revistas_schema_list(revistas_cursor)
+
+    total_pages = math.ceil(total / limit) if total > 0 else 0
+
+    return {
+        "results": revistas,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages
+    }
+
 
 @router.get("/{id}", response_model=Revista)
 async def get_revista(id: str):
