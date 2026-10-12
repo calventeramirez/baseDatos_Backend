@@ -1,16 +1,47 @@
-from fastapi import FastAPI, APIRouter, status, HTTPException
+from fastapi import FastAPI, APIRouter, status, HTTPException, Query
 from db.client import db_client
 from db.models.cdrom import CDROM
 from db.schema.cdrom import cdroms_schema, cdroms_schema_list
 from bson.objectid import ObjectId
-
-from routers.libros import search_libros
+from typing import Optional
+import math
+import re
 
 router = APIRouter(prefix="/cdrom", tags=["CD-ROM"], responses={status.HTTP_404_NOT_FOUND: {"Mensaje": "No encontrado el CD-ROM"}})
 
-@router.get("/", response_model=list[CDROM])
-async def get_all_cdrom():
-    return cdroms_schema_list(db_client.cdroms.find())
+#@router.get("/", response_model=list[CDROM])
+#async def get_all_cdrom():
+#    return cdroms_schema_list(db_client.cdroms.find())
+
+SEARCH_FIELDS = ["titulo", "tematica", "coleccion"]
+
+@router.get("/")
+async def get_all_cdrom(
+        page: int = Query(1, ge=1, description="Número de página"),
+        limit: int = Query(10, ge=1, le=100, description="CD-ROM por página"),
+        search: Optional[str] = Query(None, description="Buscar por título, temática o colección")
+):
+    skip = (page - 1) * limit
+
+    filter_query = {}
+    if search and search.strip():
+        regex = {"$regex": re.escape(search.strip()), "$options": "i"}
+        filter_query = {"$or": [{field: regex} for field in SEARCH_FIELDS]}
+
+    total = db_client.cdroms.count_documents(filter_query)
+
+    cdroms_cursor = db_client.cdroms.find(filter_query).sort("_id", -1).skip(skip).limit(limit)
+    cdroms = cdroms_schema_list(cdroms_cursor)
+
+    total_pages = math.ceil(total / limit) if total > 0 else 0
+
+    return {
+        "results": cdroms,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages
+    }
 
 @router.get("/{id}", response_model=CDROM)
 async def get_cdrom(id: str):

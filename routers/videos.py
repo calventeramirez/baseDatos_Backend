@@ -1,14 +1,54 @@
-from fastapi import FastAPI, APIRouter, status, HTTPException
+from fastapi import FastAPI, APIRouter, status, HTTPException, Query
 from db.models.videos import Videos
 from db.schema.videos import videos_schema, videos_schema_list
 from db.client import db_client
 from bson.objectid import ObjectId
+from typing import Optional
+import math
+import re
 
 router = APIRouter(prefix="/videos", tags=["Videos"], responses={status.HTTP_404_NOT_FOUND: {"Mensaje": "No encontrado el video"}})
 
-@router.get("/", response_model=list[Videos])
-async def get_all_videos():
-    return videos_schema_list(db_client.videos.find())
+#@router.get("/", response_model=list[Videos])
+#async def get_all_videos():
+#    return videos_schema_list(db_client.videos.find())
+
+
+@router.get("/")
+async def get_all_videos(
+        page: int = Query(1, ge=1, description="Número de página"),
+        limit: int = Query(10, ge=1, le=100, description="Videos por página"),
+        search: Optional[str] = Query(None, description="Buscar por título, director o protagonistas")
+):
+    skip = (page - 1) * limit
+
+    filter_query = {}
+    if search and search.strip():
+        # re.escape evita que caracteres especiales rompan la regex
+        regex = {"$regex": re.escape(search.strip()), "$options": "i"}
+        filter_query = {
+            "$or": [
+                {"tituloEsp": regex},
+                {"tituloOrg": regex},
+                {"director": regex},
+                {"protagonistas": regex},
+            ]
+        }
+
+    total = db_client.videos.count_documents(filter_query)
+
+    videos_cursor = db_client.videos.find(filter_query).sort("_id", -1).skip(skip).limit(limit)
+    videos = videos_schema_list(videos_cursor)
+
+    total_pages = math.ceil(total / limit) if total > 0 else 0
+
+    return {
+        "results": videos,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages
+    }
 
 @router.get("/{id}", response_model=Videos)
 async def get_video(id: str):
